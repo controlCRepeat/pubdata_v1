@@ -1,16 +1,25 @@
-// lib/api.ts
 import { supabase } from "../lib/supabaseClient";
 
+// Define a type matching your table structure
+type InflationData = {
+  Category: string;
+  Date: string;
+  Value: number;  // add other fields if needed
+};
+
 export async function fetchAndProcessData(tableName: string) {
-  const { data, error } = await supabase.from(tableName).select("*");
+  // Tell Supabase the expected return type
+  const { data, error } = await supabase
+    .from<InflationData>(tableName)
+    .select("*");
 
   if (error) throw error;
+  if (!data) throw new Error("No data returned");
 
-  // Extract unique categories
-  const categories = Array.from(new Set(data.map((item: any) => item.Category)));
+  // `data` is now InflationData[]
+  const categories = Array.from(new Set(data.map((item) => item.Category)));
 
-  // Extract unique dates and sort them properly
-  const uniqueDates = Array.from(new Set(data.map((item: any) => item.Date))).sort(
+  const uniqueDates = Array.from(new Set(data.map((item) => item.Date))).sort(
     (a, b) => new Date(a).getTime() - new Date(b).getTime()
   );
 

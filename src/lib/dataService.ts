@@ -1,5 +1,11 @@
 import { supabase } from "./supabaseClient";
 
+type InflationData = {
+  Category: string;
+  Date: string;
+  Value: number;
+};
+
 function parseYearMonth(dateStr: string) {
   const [year, monthStr] = dateStr.split(" ");
   const monthMap: Record<string, number> = {
@@ -10,13 +16,17 @@ function parseYearMonth(dateStr: string) {
 }
 
 export async function fetchAndProcessData(tableName: string) {
-  const { data, error } = await supabase.from(tableName).select("*");
-  if (error) throw error;
-  
-  // Extract unique categories and dates
-  const categories = Array.from(new Set(data.map((d: any) => d.Category)));
+  const { data, error } = await supabase
+    .from<InflationData>(tableName)
+    .select("*");
 
-  const uniqueDates = Array.from(new Set(data.map((d: any) => d.Date))).sort(
+  if (error) throw error;
+  if (!data) throw new Error("No data returned");
+
+  // Now `data` is typed as InflationData[]
+  const categories = Array.from(new Set(data.map((d) => d.Category)));
+
+  const uniqueDates = Array.from(new Set(data.map((d) => d.Date))).sort(
     (a, b) => parseYearMonth(a) - parseYearMonth(b)
   );
 

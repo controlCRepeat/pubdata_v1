@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Line } from "react-chartjs-2";
-import Select from "react-select";
+import Select, { MultiValue } from "react-select";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -34,18 +34,30 @@ const pastelColors = [
   "#E15D44", "#7FCDCD", "#BC243C", "#C3447A", "#009B77",
 ];
 
+// Define the data type to match your data structure
+interface InflationData {
+  Category: string;
+  Date: string;
+  Value: number;
+}
+
+// Define the shape for react-select options
+interface CategoryOption {
+  value: string;
+  label: string;
+}
+
 export default function Home() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<InflationData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  
   useEffect(() => {
     fetchData();
   }, []);
 
   async function fetchData() {
-    const { data, error } = await supabase.from(tableName).select("*");
+    const { data, error } = await supabase.from<InflationData>(tableName).select("*");
 
     if (error) {
       console.error("Error fetching data:", error);
@@ -54,29 +66,25 @@ export default function Home() {
     if (data) {
       setData(data);
 
-      const uniqueCategories = Array.from(
-        new Set(data.map((item: any) => item.Category))
-      );
+      const uniqueCategories = Array.from(new Set(data.map((item) => item.Category)));
       setCategories(uniqueCategories);
       setSelectedCategories(uniqueCategories.slice(0, 3));
     }
   }
 
-  const filteredData = data.filter((d: any) =>
-    selectedCategories.includes(d.Category)
-  );
+  const filteredData = data.filter((d) => selectedCategories.includes(d.Category));
 
-  const labels = Array.from(
-    new Set(filteredData.map((d: any) => d.Date))
-  ).sort((a, b) => new Date(a + " 1").getTime() - new Date(b + " 1").getTime());
+  const labels = Array.from(new Set(filteredData.map((d) => d.Date))).sort(
+    (a, b) => new Date(a + " 1").getTime() - new Date(b + " 1").getTime()
+  );
 
   const chartData = {
     labels,
     datasets: selectedCategories.map((cat) => {
       const catDataMap = new Map<string, number>();
       filteredData
-        .filter((d: any) => d.Category === cat)
-        .forEach((d: any) => catDataMap.set(d.Date, d.Value));
+        .filter((d) => d.Category === cat)
+        .forEach((d) => catDataMap.set(d.Date, d.Value));
 
       const dataPoints = labels.map((label) => catDataMap.get(label) ?? null);
       const colorIndex = categories.indexOf(cat);
@@ -92,7 +100,7 @@ export default function Home() {
     }),
   };
 
-  const categoryOptions = categories.map((cat) => ({
+  const categoryOptions: CategoryOption[] = categories.map((cat) => ({
     value: cat,
     label: cat,
   }));
@@ -101,8 +109,9 @@ export default function Home() {
     selectedCategories.includes(option.value)
   );
 
-  const handleSelectChange = (selected: any) => {
-    setSelectedCategories(selected.map((s: any) => s.value));
+  // react-select onChange type uses MultiValue<CategoryOption>
+  const handleSelectChange = (selected: MultiValue<CategoryOption>) => {
+    setSelectedCategories(selected.map((s) => s.value));
   };
 
   return (
