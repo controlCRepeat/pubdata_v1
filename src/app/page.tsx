@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Line } from "react-chartjs-2";
-import Select, { MultiValue } from "react-select";
+import Select from "react-select";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -34,15 +34,13 @@ const pastelColors = [
   "#E15D44", "#7FCDCD", "#BC243C", "#C3447A", "#009B77",
 ];
 
-// Define the data type to match your data structure
 interface InflationData {
   Category: string;
   Date: string;
   Value: number;
 }
 
-// Define the shape for react-select options
-interface CategoryOption {
+interface SelectOption {
   value: string;
   label: string;
 }
@@ -51,35 +49,40 @@ export default function Home() {
   const [data, setData] = useState<InflationData[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
   }, []);
 
   async function fetchData() {
+    setIsLoading(true);
     const { data, error } = await supabase
-      .from<InflationData, InflationData>(tableName)
+      .from(tableName)
       .select("*");
-  
+
     if (error) {
       console.error("Error fetching data:", error);
       return;
     }
     if (data) {
       setData(data);
-  
       const uniqueCategories = Array.from(new Set(data.map((item) => item.Category)));
       setCategories(uniqueCategories);
       setSelectedCategories(uniqueCategories.slice(0, 3));
     }
+    setIsLoading(false);
   }
-  
+
+  if (isLoading) {
+    return <div className="p-10 max-w-4xl mx-auto">Loading...</div>;
+  }
 
   const filteredData = data.filter((d) => selectedCategories.includes(d.Category));
 
-  const labels = Array.from(new Set(filteredData.map((d) => d.Date))).sort(
-    (a, b) => new Date(a + " 1").getTime() - new Date(b + " 1").getTime()
-  );
+  const labels = Array.from(
+    new Set(filteredData.map((d) => d.Date))
+  ).sort((a, b) => new Date(a + " 1").getTime() - new Date(b + " 1").getTime());
 
   const chartData = {
     labels,
@@ -103,7 +106,7 @@ export default function Home() {
     }),
   };
 
-  const categoryOptions: CategoryOption[] = categories.map((cat) => ({
+  const categoryOptions: SelectOption[] = categories.map((cat) => ({
     value: cat,
     label: cat,
   }));
@@ -112,9 +115,12 @@ export default function Home() {
     selectedCategories.includes(option.value)
   );
 
-  // react-select onChange type uses MultiValue<CategoryOption>
-  const handleSelectChange = (selected: MultiValue<CategoryOption>) => {
-    setSelectedCategories(selected.map((s) => s.value));
+  const handleSelectChange = (selected: readonly SelectOption[] | null) => {
+    if (selected) {
+      setSelectedCategories(selected.map((s) => s.value));
+    } else {
+      setSelectedCategories([]);
+    }
   };
 
   return (
@@ -137,7 +143,6 @@ export default function Home() {
         }}
       />
 
-      {/* Category dropdown below the chart */}
       <div className="mt-6">
         <label className="block mb-2 font-semibold text-gray-700">
           Filter Categories
