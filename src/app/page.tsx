@@ -57,20 +57,23 @@ export default function Home() {
   }, []);
 
   async function fetchData() {
-    const { data, error } = await supabase.from<InflationData>(tableName).select("*");
-
+    const { data, error } = await supabase
+      .from<InflationData, InflationData>(tableName)
+      .select("*");
+  
     if (error) {
       console.error("Error fetching data:", error);
       return;
     }
     if (data) {
       setData(data);
-
+  
       const uniqueCategories = Array.from(new Set(data.map((item) => item.Category)));
       setCategories(uniqueCategories);
       setSelectedCategories(uniqueCategories.slice(0, 3));
     }
   }
+  
 
   const filteredData = data.filter((d) => selectedCategories.includes(d.Category));
 
