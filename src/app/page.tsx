@@ -39,6 +39,7 @@ export default function Home() {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
+  
   useEffect(() => {
     fetchData();
   }, []);
