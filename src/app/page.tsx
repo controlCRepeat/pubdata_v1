@@ -143,6 +143,10 @@ export default function Home() {
         }}
       />
 
+      <div className="text-sm text-gray-500 mt-2 text-center">
+        Data source: <a href="https://tablebuilder.singstat.gov.sg/table/TS/M213751" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Singapore Department of Statistics</a>
+      </div>
+
       <div className="mt-6">
         <label className="block mb-2 font-semibold text-gray-700">
           Filter Categories
