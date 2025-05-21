@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { Line } from "react-chartjs-2";
+import Select from "react-select";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -24,10 +25,17 @@ ChartJS.register(
   Legend
 );
 
-const tableName = "inflation_data"; // Change to your actual table name
+const tableName = "inflation_data";
+
+const pastelColors = [
+  "#A8DADC", "#FFE066", "#FF6B6B", "#6A4C93", "#F7CAC9",
+  "#92A8D1", "#F7786B", "#88B04B", "#D65076", "#45B8AC",
+  "#EFC050", "#5B5EA6", "#9B2335", "#DFCFBE", "#55B4B0",
+  "#E15D44", "#7FCDCD", "#BC243C", "#C3447A", "#009B77",
+];
 
 export default function Home() {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
@@ -36,7 +44,7 @@ export default function Home() {
   }, []);
 
   async function fetchData() {
-    let { data, error } = await supabase.from(tableName).select("*");
+    const { data, error } = await supabase.from(tableName).select("*");
 
     if (error) {
       console.error("Error fetching data:", error);
@@ -45,75 +53,61 @@ export default function Home() {
     if (data) {
       setData(data);
 
-      // Extract unique categories for toggle options
       const uniqueCategories = Array.from(
         new Set(data.map((item: any) => item.Category))
       );
       setCategories(uniqueCategories);
-      setSelectedCategories(uniqueCategories); // default all selected
+      setSelectedCategories(uniqueCategories.slice(0, 3));
     }
   }
 
-  // Filter data based on selected categories
   const filteredData = data.filter((d: any) =>
     selectedCategories.includes(d.Category)
   );
 
-  // Prepare data for the chart
+  const labels = Array.from(
+    new Set(filteredData.map((d: any) => d.Date))
+  ).sort((a, b) => new Date(a + " 1").getTime() - new Date(b + " 1").getTime());
+
   const chartData = {
-    labels: filteredData.map((d: any) => d.Date),
-    datasets: selectedCategories.map((cat, idx) => {
-      const catData = filteredData
+    labels,
+    datasets: selectedCategories.map((cat) => {
+      const catDataMap = new Map<string, number>();
+      filteredData
         .filter((d: any) => d.Category === cat)
-        .map((d: any) => d.Value);
-      const colors = [
-        "rgba(75,192,192,1)",
-        "rgba(255,99,132,1)",
-        "rgba(54,162,235,1)",
-        "rgba(255,206,86,1)",
-        "rgba(153,102,255,1)",
-      ];
+        .forEach((d: any) => catDataMap.set(d.Date, d.Value));
+
+      const dataPoints = labels.map((label) => catDataMap.get(label) ?? null);
+      const colorIndex = categories.indexOf(cat);
+
       return {
         label: cat,
-        data: catData,
-        borderColor: colors[idx % colors.length],
-        backgroundColor: colors[idx % colors.length],
+        data: dataPoints,
+        borderColor: pastelColors[colorIndex % pastelColors.length],
+        backgroundColor: pastelColors[colorIndex % pastelColors.length],
         fill: false,
+        spanGaps: true,
       };
     }),
   };
 
-  // Handle category toggle changes
-  function toggleCategory(cat: string) {
-    if (selectedCategories.includes(cat)) {
-      setSelectedCategories(selectedCategories.filter((c) => c !== cat));
-    } else {
-      setSelectedCategories([...selectedCategories, cat]);
-    }
-  }
+  const categoryOptions = categories.map((cat) => ({
+    value: cat,
+    label: cat,
+  }));
+
+  const selectedOptions = categoryOptions.filter((option) =>
+    selectedCategories.includes(option.value)
+  );
+
+  const handleSelectChange = (selected: any) => {
+    setSelectedCategories(selected.map((s: any) => s.value));
+  };
 
   return (
     <main className="p-10 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">{tableName}</h1>
 
-      {/* Multi-select toggle for categories */}
-      <div className="mb-6 flex gap-4 flex-wrap">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => toggleCategory(cat)}
-            className={`px-3 py-1 rounded border ${
-              selectedCategories.includes(cat)
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-800"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Chart */}
       <Line
         data={chartData}
         options={{
@@ -122,8 +116,29 @@ export default function Home() {
             legend: { position: "top" },
             title: { display: true, text: "Values by Date & Category" },
           },
+          scales: {
+            y: {
+              beginAtZero: false,
+            },
+          },
         }}
       />
+
+      {/* Category dropdown below the chart */}
+      <div className="mt-6">
+        <label className="block mb-2 font-semibold text-gray-700">
+          Filter Categories
+        </label>
+        <Select
+          options={categoryOptions}
+          value={selectedOptions}
+          onChange={handleSelectChange}
+          isMulti
+          closeMenuOnSelect={false}
+          className="text-black"
+          classNamePrefix="react-select"
+        />
+      </div>
     </main>
   );
 }
