@@ -17,7 +17,7 @@ function parseYearMonth(dateStr: string) {
 
 export async function fetchAndProcessData(tableName: string) {
   const { data, error } = await supabase
-    .from<InflationData>(tableName)
+    .from(tableName)
     .select("*");
 
   if (error) throw error;

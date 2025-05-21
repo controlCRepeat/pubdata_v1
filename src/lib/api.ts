@@ -10,7 +10,7 @@ type InflationData = {
 export async function fetchAndProcessData(tableName: string) {
   // Tell Supabase the expected return type
   const { data, error } = await supabase
-    .from<InflationData>(tableName)
+    .from(tableName)
     .select("*");
 
   if (error) throw error;
