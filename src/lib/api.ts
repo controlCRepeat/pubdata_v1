@@ -1,12 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
 
-// Define a type matching your table structure
-type InflationData = {
-  Category: string;
-  Date: string;
-  Value: number;  // add other fields if needed
-};
-
 export async function fetchAndProcessData(tableName: string) {
   // Tell Supabase the expected return type
   const { data, error } = await supabase

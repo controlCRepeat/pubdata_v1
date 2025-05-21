@@ -1,11 +1,5 @@
 import { supabase } from "./supabaseClient";
 
-type InflationData = {
-  Category: string;
-  Date: string;
-  Value: number;
-};
-
 function parseYearMonth(dateStr: string) {
   const [year, monthStr] = dateStr.split(" ");
   const monthMap: Record<string, number> = {
