@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { fetchAndProcessData } from "../lib/dataService";
 import { chartConfigs } from "../lib/chartConfigs";
 import { ChartConfig, ChartDataset } from "../lib/types";
 import { Line } from "react-chartjs-2";
-import Select from "react-select";
+import Select, { MultiValue } from "react-select";
 import Head from "next/head";
+import Image from "next/image";
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -46,15 +48,15 @@ function ChartBlock({ config }: { config: ChartConfig }) {
     fetchChartData();
   }, []);
 
-  async function fetchChartData() {
+  const fetchChartData = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, categories } = await fetchAndProcessData(config);
-      const parseDate = config.parseDateFn ?? ((d: any) => d);
+      const parseDate = config.parseDateFn ?? ((d: string) => d);
       const uniqueDates = [
         ...new Set(data.map((d) => parseDate(d[config.dateKey])))
       ];
-
+  
       setData(data);
       setCategories(categories);
       setDates(uniqueDates);
@@ -64,7 +66,11 @@ function ChartBlock({ config }: { config: ChartConfig }) {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [config]);
+  
+  useEffect(() => {
+    fetchChartData();
+  }, [fetchChartData]);
 
   const filteredData = data.filter((d) =>
     selectedCategories.includes(d[config.categoryKey] as string)
@@ -105,7 +111,7 @@ function ChartBlock({ config }: { config: ChartConfig }) {
     label: cat,
   }));
 
-  const handleCategoryChange = (selected: readonly any[] | null) => {
+  const handleCategoryChange = (selected: MultiValue<{ value: string; label: string }>) => {
     setSelectedCategories(selected ? selected.map((s) => s.value) : []);
   };
 
@@ -146,10 +152,12 @@ function ChartBlock({ config }: { config: ChartConfig }) {
         <div className="absolute inset-0">
           <Line data={chartData} options={chartOptions} />
         </div>
-        <img
+        <Image
           src="/watermark.png"
           alt="Watermark"
-          className="pointer-events-none absolute top-1/2 left-1/2 w-10 h-10 opacity-20 transform -translate-x-1/2 -translate-y-1/2"
+          width={40}
+          height={40}
+          className="pointer-events-none absolute top-1/2 left-1/2 opacity-20 transform -translate-x-1/2 -translate-y-1/2"
         />
       </div>
 
