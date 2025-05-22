@@ -44,15 +44,11 @@ function ChartBlock({ config }: { config: ChartConfig }) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchChartData();
-  }, []);
-
   const fetchChartData = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, categories } = await fetchAndProcessData(config);
-      const parseDate = config.parseDateFn ?? ((d: string) => d);
+      const parseDate = config.parseDateFn ?? ((d: any) => d);
       const uniqueDates = [
         ...new Set(data.map((d) => parseDate(d[config.dateKey])))
       ];
@@ -71,7 +67,7 @@ function ChartBlock({ config }: { config: ChartConfig }) {
   useEffect(() => {
     fetchChartData();
   }, [fetchChartData]);
-
+  
   const filteredData = data.filter((d) =>
     selectedCategories.includes(d[config.categoryKey] as string)
   );
