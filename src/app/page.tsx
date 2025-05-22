@@ -155,7 +155,15 @@ function ChartBlock({ config }: { config: ChartConfig }) {
 
 
       <div className="text-sm text-gray-500 mt-2 text-center">
-        Source: {config.tableName}
+        Source:{" "}
+        <a
+          href={config.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 underline"
+        >
+          {config.sourceLabel || config.sourceUrl}
+        </a>
       </div>
 
       <div className="mt-4 w-full max-w-full">

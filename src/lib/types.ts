@@ -5,6 +5,8 @@ export interface ChartConfig {
     categoryKey: string;
     dateKey: string;
     valueKey: string;
+    sourceUrl: string;
+    sourceLabel: string;
     parseDateFn?: (date: string | number) => string;
   }
   
