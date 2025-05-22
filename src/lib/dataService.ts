@@ -1,28 +1,33 @@
-import { supabase } from "./supabaseClient";
+// dataService.ts
+import { fetchRawData } from "./api";
+import { ChartConfig } from "./types";
 
-function parseYearMonth(dateStr: string) {
-  const [year, monthStr] = dateStr.split(" ");
-  const monthMap: Record<string, number> = {
-    Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
-    Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12,
-  };
-  return parseInt(year) * 100 + (monthMap[monthStr] || 0);
+export function parseYearMonth(dateStr: string): string {
+  if (typeof dateStr !== "string") return String(dateStr);
+  const [year, month] = dateStr.split(" ");
+  if (!month) return dateStr; // fallback
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthIndex = months.indexOf(month);
+  if (monthIndex === -1) return dateStr;
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
 }
 
-export async function fetchAndProcessData(tableName: string) {
-  const { data, error } = await supabase
-    .from(tableName)
-    .select("*");
+export async function fetchAndProcessData(config: ChartConfig) {
+  const rawData = await fetchRawData(config.tableName);
 
-  if (error) throw error;
-  if (!data) throw new Error("No data returned");
+  // Use the parseDateFn if defined, else fallback
+  const parseDate = config.parseDateFn ?? ((d: string | number) => String(d));
 
-  // Now `data` is typed as InflationData[]
-  const categories = Array.from(new Set(data.map((d) => d.Category)));
+  // Extract categories and uniqueDates
+  const categories = Array.from(new Set(rawData.map((d) => String(d[config.categoryKey]))));
+  const uniqueDates = Array.from(new Set(rawData.map((d) => parseDate(d[config.dateKey]))));
 
-  const uniqueDates = Array.from(new Set(data.map((d) => d.Date))).sort(
-    (a, b) => parseYearMonth(a) - parseYearMonth(b)
-  );
+  // Sort dates (assumes YYYY-MM or YYYY format)
+  uniqueDates.sort();
 
-  return { data, categories, uniqueDates };
+  return {
+    data: rawData,
+    categories,
+    uniqueDates,
+  };
 }

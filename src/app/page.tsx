@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { fetchAndProcessData } from "../lib/dataService";
+import { chartConfigs } from "../lib/chartConfigs";
+import { ChartConfig, ChartDataset } from "../lib/types";
 import { Line } from "react-chartjs-2";
 import Select from "react-select";
 import {
@@ -25,8 +27,6 @@ ChartJS.register(
   Legend
 );
 
-const tableName = "inflation_data";
-
 const pastelColors = [
   "#A8DADC", "#FFE066", "#FF6B6B", "#6A4C93", "#F7CAC9",
   "#92A8D1", "#F7786B", "#88B04B", "#D65076", "#45B8AC",
@@ -34,65 +34,55 @@ const pastelColors = [
   "#E15D44", "#7FCDCD", "#BC243C", "#C3447A", "#009B77",
 ];
 
-interface InflationData {
-  Category: string;
-  Date: string;
-  Value: number;
-}
-
-interface SelectOption {
-  value: string;
-  label: string;
-}
-
-export default function Home() {
-  const [data, setData] = useState<InflationData[]>([]);
+function ChartBlock({ config }: { config: ChartConfig }) {
+  const [data, setData] = useState<ChartDataset[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [dates, setDates] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    fetchChartData();
   }, []);
 
-  async function fetchData() {
+  async function fetchChartData() {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from(tableName)
-      .select("*");
+    try {
+      const { data, categories } = await fetchAndProcessData(config);
+      const parseDate = config.parseDateFn ?? ((d: any) => d);
+      const uniqueDates = [
+        ...new Set(data.map((d) => parseDate(d[config.dateKey])))
+      ];
 
-    if (error) {
-      console.error("Error fetching data:", error);
-      return;
-    }
-    if (data) {
       setData(data);
-      const uniqueCategories = Array.from(new Set(data.map((item) => item.Category)));
-      setCategories(uniqueCategories);
-      setSelectedCategories(uniqueCategories.slice(0, 3));
+      setCategories(categories);
+      setDates(uniqueDates);
+      setSelectedCategories(categories.slice(0, 3));
+    } catch (err) {
+      console.error("Error loading chart data:", err);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
-  if (isLoading) {
-    return <div className="p-10 max-w-4xl mx-auto">Loading...</div>;
-  }
-
-  const filteredData = data.filter((d) => selectedCategories.includes(d.Category));
-
-  const labels = Array.from(
-    new Set(filteredData.map((d) => d.Date))
-  ).sort((a, b) => new Date(a + " 1").getTime() - new Date(b + " 1").getTime());
+  const filteredData = data.filter((d) =>
+    selectedCategories.includes(d[config.categoryKey] as string)
+  );
 
   const chartData = {
-    labels,
+    labels: dates,
     datasets: selectedCategories.map((cat) => {
       const catDataMap = new Map<string, number>();
       filteredData
-        .filter((d) => d.Category === cat)
-        .forEach((d) => catDataMap.set(d.Date, d.Value));
+        .filter((d) => d[config.categoryKey] === cat)
+        .forEach((d) =>
+          catDataMap.set(
+            (config.parseDateFn?.(d[config.dateKey]) ?? d[config.dateKey]) as string,
+            d[config.valueKey] as number
+          )
+        );
 
-      const dataPoints = labels.map((label) => catDataMap.get(label) ?? null);
+      const dataPoints = dates.map((label) => catDataMap.get(label) ?? null);
       const colorIndex = categories.indexOf(cat);
 
       return {
@@ -102,64 +92,82 @@ export default function Home() {
         backgroundColor: pastelColors[colorIndex % pastelColors.length],
         fill: false,
         spanGaps: true,
+        borderWidth: 1,
+        pointRadius: 0,
+        pointHoverRadius: 0,
       };
     }),
   };
 
-  const categoryOptions: SelectOption[] = categories.map((cat) => ({
+  const categoryOptions = categories.map((cat) => ({
     value: cat,
     label: cat,
   }));
 
-  const selectedOptions = categoryOptions.filter((option) =>
-    selectedCategories.includes(option.value)
-  );
-
-  const handleSelectChange = (selected: readonly SelectOption[] | null) => {
-    if (selected) {
-      setSelectedCategories(selected.map((s) => s.value));
-    } else {
-      setSelectedCategories([]);
-    }
+  const handleCategoryChange = (selected: readonly any[] | null) => {
+    setSelectedCategories(selected ? selected.map((s) => s.value) : []);
   };
 
-  return (
-    <main className="p-10 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">{tableName}</h1>
+  if (isLoading) {
+    return <div className="text-center p-4">Loading {config.name}...</div>;
+  }
 
+  return (
+    <div className="p-4 w-full">
+      <h2 className="text-xl font-semibold mb-2">{config.name}</h2>
       <Line
         data={chartData}
         options={{
           responsive: true,
           plugins: {
             legend: { position: "top" },
-            title: { display: true, text: "Values by Date & Category" },
+            title: { display: true, text: config.name },
+            tooltip: {
+              mode: "index",
+              intersect: false,
+            },
           },
           scales: {
-            y: {
-              beginAtZero: false,
-            },
+            y: { beginAtZero: false },
           },
         }}
       />
 
       <div className="text-sm text-gray-500 mt-2 text-center">
-        Data source: <a href="https://tablebuilder.singstat.gov.sg/table/TS/M213751" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">Singapore Department of Statistics</a>
+        Source: {config.tableName}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4 w-full max-w-full">
         <label className="block mb-2 font-semibold text-gray-700">
           Filter Categories
         </label>
         <Select
           options={categoryOptions}
-          value={selectedOptions}
-          onChange={handleSelectChange}
+          value={categoryOptions.filter((opt) =>
+            selectedCategories.includes(opt.value)
+          )}
+          onChange={handleCategoryChange}
           isMulti
           closeMenuOnSelect={false}
-          className="text-black"
+          className="text-black w-full"
           classNamePrefix="react-select"
+          styles={{
+            container: (provided) => ({ ...provided, width: "100%" }),
+          }}
         />
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <main className="py-24 px-10 max-w-7xl mx-auto min-h-screen flex flex-col justify-center">
+      <h1 className="text-3xl font-bold mb-8 text-center">Open Data Charts</h1>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6">
+        {chartConfigs.map((config) => (
+          <ChartBlock key={config.id} config={config} />
+        ))}
       </div>
     </main>
   );
