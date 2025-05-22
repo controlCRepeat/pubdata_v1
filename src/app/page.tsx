@@ -6,6 +6,7 @@ import { chartConfigs } from "../lib/chartConfigs";
 import { ChartConfig, ChartDataset } from "../lib/types";
 import { Line } from "react-chartjs-2";
 import Select from "react-select";
+import Head from "next/head";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -108,6 +109,32 @@ function ChartBlock({ config }: { config: ChartConfig }) {
     setSelectedCategories(selected ? selected.map((s) => s.value) : []);
   };
 
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: false,
+      },
+      tooltip: {
+        mode: "index" as const,
+        intersect: false,
+      },
+    },
+    scales: {
+      x: {
+        display: true,
+      },
+      y: {
+        display: true,
+        beginAtZero: false,
+      },
+    },
+  };
+
   if (isLoading) {
     return <div className="text-center p-4">Loading {config.name}...</div>;
   }
@@ -115,23 +142,17 @@ function ChartBlock({ config }: { config: ChartConfig }) {
   return (
     <div className="p-4 w-full">
       <h2 className="text-xl font-semibold mb-2">{config.name}</h2>
-      <Line
-        data={chartData}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: { position: "top" },
-            title: { display: true, text: config.name },
-            tooltip: {
-              mode: "index",
-              intersect: false,
-            },
-          },
-          scales: {
-            y: { beginAtZero: false },
-          },
-        }}
-      />
+      <div className="relative h-64"> {/* h-64 = 16rem = 256px */}
+        <div className="absolute inset-0">
+          <Line data={chartData} options={chartOptions} />
+        </div>
+        <img
+          src="/watermark.png"
+          alt="Watermark"
+          className="pointer-events-none absolute top-1/2 left-1/2 w-10 h-10 opacity-20 transform -translate-x-1/2 -translate-y-1/2"
+        />
+      </div>
+
 
       <div className="text-sm text-gray-500 mt-2 text-center">
         Source: {config.tableName}
@@ -162,13 +183,20 @@ function ChartBlock({ config }: { config: ChartConfig }) {
 
 export default function Home() {
   return (
-    <main className="py-24 px-10 max-w-7xl mx-auto min-h-screen flex flex-col justify-center">
-      <h1 className="text-3xl font-bold mb-8 text-center">Open Data Charts</h1>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6">
-        {chartConfigs.map((config) => (
-          <ChartBlock key={config.id} config={config} />
-        ))}
-      </div>
-    </main>
+    <>
+      <Head>
+        <title>Open Data Charts</title>
+        <meta name="description" content="Interactive charts for open data" />
+      </Head>
+
+      <main className="py-24 px-10 max-w-7xl mx-auto min-h-screen flex flex-col justify-center">
+        <h1 className="text-3xl font-bold mb-8 text-center">Open Data Charts</h1>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6">
+          {chartConfigs.map((config) => (
+            <ChartBlock key={config.id} config={config} />
+          ))}
+        </div>
+      </main>
+    </>
   );
 }
