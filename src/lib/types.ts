@@ -8,6 +8,8 @@ export interface ChartConfig {
     sourceUrl: string;
     sourceLabel: string;
     parseDateFn?: (date: string | number) => string;
+    colorGroup?: string; 
+    group?: string;
   }
   
   export interface ChartDataset {

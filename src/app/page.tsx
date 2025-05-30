@@ -5,7 +5,7 @@ import { fetchAndProcessData } from "../lib/dataService";
 import { chartConfigs } from "../lib/chartConfigs";
 import { ChartConfig, ChartDataset } from "../lib/types";
 import { Line } from "react-chartjs-2";
-import Select, { MultiValue } from "react-select";
+// import Select, { MultiValue } from "react-select";
 import Head from "next/head";
 import Image from "next/image";
 
@@ -18,6 +18,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 
 ChartJS.register(
@@ -27,7 +28,8 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler,
 );
 
 const pastelColors = [
@@ -37,11 +39,10 @@ const pastelColors = [
   "#E15D44", "#7FCDCD", "#BC243C", "#C3447A", "#009B77",
 ];
 
-function ChartBlock({ config }: { config: ChartConfig }) {
+function ChartBlock({ config, chartIndex }: { config: ChartConfig; chartIndex: number }) {
   const [data, setData] = useState<ChartDataset[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [dates, setDates] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchChartData = useCallback(async () => {
@@ -52,30 +53,37 @@ function ChartBlock({ config }: { config: ChartConfig }) {
       const uniqueDates = [
         ...new Set(data.map((d) => parseDate(d[config.dateKey])))
       ];
-  
+
       setData(data);
       setCategories(categories);
       setDates(uniqueDates);
-      setSelectedCategories(categories.slice(0, 3));
     } catch (err) {
       console.error("Error loading chart data:", err);
     } finally {
       setIsLoading(false);
     }
   }, [config]);
-  
+
   useEffect(() => {
     fetchChartData();
   }, [fetchChartData]);
-  
-  const filteredData = data.filter((d) =>
-    selectedCategories.includes(d[config.categoryKey] as string)
-  );
 
+  // show all categories, no filter
+  // const filteredData = data.filter((d) =>
+  //   selectedCategories.includes(d[config.categoryKey] as string)
+  // );
+  const filteredData = data;
+
+  // Group-based color assignment
+  const uniqueGroups = Array.from(
+    new Set(chartConfigs.map((cfg) => cfg.group ?? cfg.id))
+  )
+  const groupIndex = uniqueGroups.indexOf(config.group ?? config.id)
+  
   const chartData = {
     labels: dates,
-    datasets: selectedCategories.map((cat) => {
-      const catDataMap = new Map<string, number>();
+    datasets: categories.map((cat, i) => {
+      const catDataMap = new Map<string, number>()
       filteredData
         .filter((d) => d[config.categoryKey] === cat)
         .forEach((d) =>
@@ -83,40 +91,36 @@ function ChartBlock({ config }: { config: ChartConfig }) {
             (config.parseDateFn?.(d[config.dateKey]) ?? d[config.dateKey]) as string,
             d[config.valueKey] as number
           )
-        );
+        )
 
-      const dataPoints = dates.map((label) => catDataMap.get(label) ?? null);
-      const colorIndex = categories.indexOf(cat);
+      const dataPoints = dates.map((label) => catDataMap.get(label) ?? null)
+
+      const baseColorIndex = (groupIndex * 5 + i) % pastelColors.length
 
       return {
         label: cat,
         data: dataPoints,
-        borderColor: pastelColors[colorIndex % pastelColors.length],
-        backgroundColor: pastelColors[colorIndex % pastelColors.length],
-        fill: false,
+        borderColor: pastelColors[baseColorIndex],
+        backgroundColor: pastelColors[baseColorIndex] + "80",
+        fill: true,
         spanGaps: true,
-        borderWidth: 1,
+        borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 0,
-      };
+      }
     }),
-  };
+  }
 
-  const categoryOptions = categories.map((cat) => ({
-    value: cat,
-    label: cat,
-  }));
-
-  const handleCategoryChange = (selected: MultiValue<{ value: string; label: string }>) => {
-    setSelectedCategories(selected ? selected.map((s) => s.value) : []);
-  };
-
+  
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top" as const,
+        labels: {
+          color: "white", // legend text color
+        },
       },
       title: {
         display: false,
@@ -129,10 +133,22 @@ function ChartBlock({ config }: { config: ChartConfig }) {
     scales: {
       x: {
         display: true,
+        ticks: {
+          color: "white", // x axis ticks color
+        },
+        grid: {
+          color: "rgba(255, 255, 255, 0.1)", // subtle white grid lines
+        },
       },
       y: {
         display: true,
         beginAtZero: false,
+        ticks: {
+          color: "white", // y axis ticks color
+        },
+        grid: {
+          color: "rgba(255, 255, 255, 0.1)", // subtle white grid lines
+        },
       },
     },
   };
@@ -144,7 +160,7 @@ function ChartBlock({ config }: { config: ChartConfig }) {
   return (
     <div className="p-4 w-full">
       <h2 className="text-xl font-semibold mb-2">{config.name}</h2>
-      <div className="relative h-64"> {/* h-64 = 16rem = 256px */}
+      <div className="relative h-64">
         <div className="absolute inset-0">
           <Line data={chartData} options={chartOptions} />
         </div>
@@ -156,7 +172,6 @@ function ChartBlock({ config }: { config: ChartConfig }) {
           className="pointer-events-none absolute top-1/2 left-1/2 opacity-20 transform -translate-x-1/2 -translate-y-1/2"
         />
       </div>
-
 
       <div className="text-sm text-gray-500 mt-2 text-center">
         Source:{" "}
@@ -170,25 +185,7 @@ function ChartBlock({ config }: { config: ChartConfig }) {
         </a>
       </div>
 
-      <div className="mt-4 w-full max-w-full">
-        <label className="block mb-2 font-semibold text-gray-700">
-          Filter Categories
-        </label>
-        <Select
-          options={categoryOptions}
-          value={categoryOptions.filter((opt) =>
-            selectedCategories.includes(opt.value)
-          )}
-          onChange={handleCategoryChange}
-          isMulti
-          closeMenuOnSelect={false}
-          className="text-black w-full"
-          classNamePrefix="react-select"
-          styles={{
-            container: (provided) => ({ ...provided, width: "100%" }),
-          }}
-        />
-      </div>
+      {/* Removed Filter Categories dropdown */}
     </div>
   );
 }
@@ -204,9 +201,9 @@ export default function Home() {
       <main className="py-24 px-10 max-w-7xl mx-auto min-h-screen flex flex-col justify-center">
         <h1 className="text-3xl font-bold mb-8 text-center">Open Data Charts</h1>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6">
-          {chartConfigs.map((config) => (
-            <ChartBlock key={config.id} config={config} />
-          ))}
+        {chartConfigs.map((config, i) => (
+          <ChartBlock key={config.id} config={config} chartIndex={i} />
+        ))}
         </div>
       </main>
     </>
