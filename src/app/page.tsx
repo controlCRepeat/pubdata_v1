@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { fetchAndProcessData } from "../lib/dataService";
 import { chartConfigs } from "../lib/chartConfigs";
 import { ChartConfig, ChartDataset } from "../lib/types";
@@ -8,6 +8,7 @@ import { Line } from "react-chartjs-2";
 // import Select, { MultiValue } from "react-select";
 import Head from "next/head";
 import Image from "next/image";
+import TableauEmbed from '../components/TableauEmbed';
 
 import {
   Chart as ChartJS,
@@ -82,7 +83,7 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
   
   const chartData = {
     labels: dates,
-    datasets: categories.map((cat, i) => {
+    datasets: categories.map((cat) => {
       const catDataMap = new Map<string, number>()
       filteredData
         .filter((d) => d[config.categoryKey] === cat)
@@ -95,7 +96,7 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
 
       const dataPoints = dates.map((label) => catDataMap.get(label) ?? null)
 
-      const baseColorIndex = (groupIndex * 5 + i) % pastelColors.length
+      const baseColorIndex = (groupIndex * 5) % pastelColors.length
 
       return {
         label: cat,
@@ -201,9 +202,10 @@ export default function Home() {
       <main className="py-24 px-10 max-w-7xl mx-auto min-h-screen flex flex-col justify-center">
         <h1 className="text-3xl font-bold mb-8 text-center">Open Data Charts</h1>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6">
-        {chartConfigs.map((config, i) => (
-          <ChartBlock key={config.id} config={config} />
-        ))}
+          {chartConfigs.map((config) => (
+            <ChartBlock key={config.id} config={config} />
+          ))}
+          <TableauEmbed />
         </div>
       </main>
     </>
