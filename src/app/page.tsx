@@ -39,7 +39,7 @@ const pastelColors = [
   "#E15D44", "#7FCDCD", "#BC243C", "#C3447A", "#009B77",
 ];
 
-function ChartBlock({ config, chartIndex }: { config: ChartConfig; chartIndex: number }) {
+function ChartBlock({ config }: { config: ChartConfig; }) {
   const [data, setData] = useState<ChartDataset[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [dates, setDates] = useState<string[]>([]);
@@ -49,7 +49,7 @@ function ChartBlock({ config, chartIndex }: { config: ChartConfig; chartIndex: n
     setIsLoading(true);
     try {
       const { data, categories } = await fetchAndProcessData(config);
-      const parseDate = config.parseDateFn ?? ((d: any) => d);
+      const parseDate = config.parseDateFn ?? ((d: unknown) => d as string);
       const uniqueDates = [
         ...new Set(data.map((d) => parseDate(d[config.dateKey])))
       ];
@@ -202,7 +202,7 @@ export default function Home() {
         <h1 className="text-3xl font-bold mb-8 text-center">Open Data Charts</h1>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6">
         {chartConfigs.map((config, i) => (
-          <ChartBlock key={config.id} config={config} chartIndex={i} />
+          <ChartBlock key={config.id} config={config} />
         ))}
         </div>
       </main>
