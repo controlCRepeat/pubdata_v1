@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchAndProcessData } from "../lib/dataService";
 import { chartConfigs } from "../lib/chartConfigs";
-import { ChartConfig, ChartDataset } from "../lib/types";
+import { ChartConfig, ChartDataset, DataRow } from "../lib/types";
 import { Line } from "react-chartjs-2";
 // import Select, { MultiValue } from "react-select";
 import Head from "next/head";
@@ -41,7 +41,7 @@ const pastelColors = [
 ];
 
 function ChartBlock({ config }: { config: ChartConfig; }) {
-  const [data, setData] = useState<ChartDataset[]>([]);
+  const [data, setData] = useState<DataRow[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [dates, setDates] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,7 +173,7 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
           className="pointer-events-none absolute top-1/2 left-1/2 opacity-20 transform -translate-x-1/2 -translate-y-1/2"
         />
       </div>
-
+  
       <div className="text-sm text-gray-500 mt-2 text-center">
         Source:{" "}
         <a
@@ -185,10 +185,9 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
           {config.sourceLabel || config.sourceUrl}
         </a>
       </div>
-
-      {/* Removed Filter Categories dropdown */}
     </div>
   );
+  
 }
 
 export default function Home() {

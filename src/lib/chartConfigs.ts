@@ -2,8 +2,67 @@
 import { ChartConfig } from "./types"
 import { parseYearMonth } from "./dataService"
 
-// chartConfigs.ts
 export const chartConfigs: ChartConfig[] = [
+  {
+    id: "total_population",
+    name: "Total Population Over Time",
+    tableName: "total_population",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810001",
+    sourceLabel: "Total Population",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "health",
+  },
+  {
+    id: "children_born",
+    name: "Total Live-Births",
+    tableName: "children_born",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810091",
+    sourceLabel: "Total Live-Births",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "health",
+  },
+  {
+    id: "life_expectancy",
+    name: "Life Expectancy at Birth (Residents)",
+    tableName: "life_expectancy",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810501",
+    sourceLabel: "Life Expectancy",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "demographic",
+  },
+  {
+    id: "deaths",
+    name: "Total Deaths",
+    tableName: "deaths",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810481",
+    sourceLabel: "Total Deaths",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "demographic",
+  },
+  {
+    id: "fertility_rate",
+    name: "Total Fertility Rate (TFR)",
+    tableName: "fertility_rate",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810091",
+    sourceLabel: "Fertility Rate",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "demographic",
+  },
   {
     id: "marriages",
     name: "Marriages Over Time",
@@ -14,7 +73,7 @@ export const chartConfigs: ChartConfig[] = [
     sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M830101",
     sourceLabel: "Department of Statistics Singapore - Marriages",
     parseDateFn: (d) => parseYearMonth(String(d)),
-    group: "family", // shared group
+    group: "family",
   },
   {
     id: "divorces",
@@ -26,11 +85,11 @@ export const chartConfigs: ChartConfig[] = [
     sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M830201",
     sourceLabel: "Department of Statistics Singapore - Divorces",
     parseDateFn: (d) => parseYearMonth(String(d)),
-    group: "family", // same group as marriages
+    group: "family",
   },
   {
-    id: "households",
-    name: "Number of Households Over Time",
+    id: "num_households",
+    name: "Resident Households Over Time",
     tableName: "num_households",
     categoryKey: "Category",
     dateKey: "Date",
@@ -38,6 +97,32 @@ export const chartConfigs: ChartConfig[] = [
     sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810371",
     sourceLabel: "Department of Statistics Singapore - Households",
     parseDateFn: (d) => parseYearMonth(String(d)),
-    group: "housing", // different group
+    group: "housing",
   },
+  {
+    id: "av_household_size",
+    name: "Average Household Size",
+    tableName: "av_household_size",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810371",
+    sourceLabel: "Department of Statistics Singapore - Average Household Size",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "housing",
+  },
+  {
+    id: "owner_occupier",
+    name: "Resident Households in Owner-Occupied Dwellings",
+    tableName: "owner_occupier",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810401",
+    sourceLabel: "Department of Statistics Singapore - Owner-Occupied Households",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "housing",
+    filterFn: (row) => row["SeriesNo"] === "2", // ✅ Only include "Proportion Of Owner-Occupied Resident Households"
+  },
+
 ]

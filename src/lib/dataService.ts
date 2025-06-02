@@ -1,32 +1,37 @@
 // dataService.ts
 import { fetchRawData } from "./api";
-import { ChartConfig } from "./types";
+import { ChartConfig, DataRow } from "./types";
 
 export function parseYearMonth(dateStr: string): string {
   if (typeof dateStr !== "string") return String(dateStr);
   const [year, month] = dateStr.split(" ");
-  if (!month) return dateStr; // fallback
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  if (!month) return dateStr;
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const monthIndex = months.indexOf(month);
   if (monthIndex === -1) return dateStr;
+
   return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
 }
 
-export async function fetchAndProcessData(config: ChartConfig) {
-  const rawData = await fetchRawData(config.tableName);
+export async function fetchAndProcessData<T extends DataRow>(config: ChartConfig<T>) {
+  const rawData = await fetchRawData<T>(config.tableName);
 
-  // Use the parseDateFn if defined, else fallback
-  const parseDate = config.parseDateFn ?? ((d: string | number) => String(d));
+  const parseDate = config.parseDateFn ?? ((d: unknown) => String(d));
 
-  // Extract categories and uniqueDates
-  const categories = Array.from(new Set(rawData.map((d) => String(d[config.categoryKey]))));
-  const uniqueDates = Array.from(new Set(rawData.map((d) => parseDate(d[config.dateKey]))));
+  const filteredData = config.filterFn ? rawData.filter(config.filterFn) : rawData;
 
-  // Sort dates (assumes YYYY-MM or YYYY format)
-  uniqueDates.sort();
+  const categories = Array.from(
+    new Set(filteredData.map((d) => String(d[config.categoryKey])))
+  );
+
+  const uniqueDates = Array.from(
+    new Set(filteredData.map((d) => parseDate(d[config.dateKey])))
+  ).sort();
 
   return {
-    data: rawData,
+    data: filteredData,
     categories,
     uniqueDates,
   };
