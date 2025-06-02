@@ -168,9 +168,9 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
         <Image
           src="/watermark.png"
           alt="Watermark"
-          width={40}
-          height={40}
-          className="pointer-events-none absolute top-1/2 left-1/2 opacity-20 transform -translate-x-1/2 -translate-y-1/2"
+          width={60} // Increased from 40 → 60 (50% more)
+          height={60}
+          className="pointer-events-none absolute top-1/2 left-1/2 opacity-30 transform -translate-x-1/2 -translate-y-1/2"
         />
       </div>
   
