@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchAndProcessData } from "../lib/dataService";
 import { chartConfigs } from "../lib/chartConfigs";
-import { ChartConfig, ChartDataset, DataRow } from "../lib/types";
+import { ChartConfig, DataRow } from "../lib/types";
 import { Line } from "react-chartjs-2";
 // import Select, { MultiValue } from "react-select";
 import Head from "next/head";

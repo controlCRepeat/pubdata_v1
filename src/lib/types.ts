@@ -15,8 +15,3 @@ export interface ChartConfig<T extends DataRow = DataRow> {
   group?: string;
   filterFn?: (row: T) => boolean;
 }
-  
-export interface ChartDataset {
-  [key: string]: string | number;
-}
- 
