@@ -7,10 +7,12 @@ import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
+  ChartOptions,
   LinearScale,
   BarElement,
   Title,
   Tooltip,
+  TooltipItem,
   Legend,
 } from "chart.js";
 import Image from "next/image";
@@ -84,9 +86,8 @@ export default function PopulationPyramidChart({ config }: PopulationPyramidChar
     femaleValues.push(femaleVal);
   });
 
-  // 3️⃣ Prepare Chart.js data
   const chartData = {
-    labels: ageGroups, // y-axis
+    labels: ageGroups,
     datasets: [
       {
         label: "Males",
@@ -100,17 +101,15 @@ export default function PopulationPyramidChart({ config }: PopulationPyramidChar
       },
     ],
   };
-
-  // 4️⃣ Configure horizontal stacked bars and y axis tooltip
-  const chartOptions = {
-    indexAxis: "y" as const,
+  
+  const chartOptions: ChartOptions<"bar"> = {
+    indexAxis: "y",
     responsive: true,
     maintainAspectRatio: false,
   
-    // Force interaction & tooltip along the y‐axis
     interaction: {
-      mode: "index" as const,
-      axis: "y" as const,
+      mode: "index",
+      axis: "y",
       intersect: false,
     },
   
@@ -118,7 +117,9 @@ export default function PopulationPyramidChart({ config }: PopulationPyramidChar
       x: {
         stacked: true,
         ticks: {
-          callback: (value: any) => Math.abs(Number(value)),
+          callback: (value: number | string): string => {
+            return Math.abs(Number(value)).toString();
+          },
           color: "white",
         },
         grid: { color: "rgba(255, 255, 255, 0.1)" },
@@ -129,14 +130,15 @@ export default function PopulationPyramidChart({ config }: PopulationPyramidChar
         grid: { color: "rgba(255, 255, 255, 0.1)" },
       },
     },
+  
     plugins: {
-      legend: { position: "top" as const, labels: { color: "white" } },
+      legend: { position: "top", labels: { color: "white" } },
       tooltip: {
-        axis: "y" as const,
-        mode: "index" as const,
+        axis: "y",
+        mode: "index",
         intersect: false,
         callbacks: {
-          label: (context: any) => {
+          label: (context: TooltipItem<"bar">): string => {
             const raw = context.raw as number;
             const absValue = Math.abs(raw);
             return `${context.dataset.label}: ${absValue.toLocaleString()}`;

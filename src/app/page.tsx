@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { fetchAndProcessData } from "../lib/dataService";
 import { chartConfigs } from "../lib/chartConfigs";
-import { ChartConfig, DataRow } from "../lib/types";
+import { ChartConfig } from "../lib/types";
 import { Line } from "react-chartjs-2"; // for all non-pyramid charts
 import Head from "next/head";
 import Image from "next/image";
