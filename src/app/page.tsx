@@ -4,11 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { fetchAndProcessData } from "../lib/dataService";
 import { chartConfigs } from "../lib/chartConfigs";
 import { ChartConfig, DataRow } from "../lib/types";
-import { Line } from "react-chartjs-2";
-// import Select, { MultiValue } from "react-select";
+import { Line } from "react-chartjs-2"; // for all non-pyramid charts
 import Head from "next/head";
 import Image from "next/image";
-import TableauEmbed from '../components/TableauEmbed';
+import PopulationPyramidChart from "../components/PopulationPyramid";
+import TableauEmbed from "../components/TableauEmbed";
 
 import {
   Chart as ChartJS,
@@ -30,7 +30,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler,
+  Filler
 );
 
 const pastelColors = [
@@ -41,23 +41,18 @@ const pastelColors = [
 ];
 
 function ChartBlock({ config }: { config: ChartConfig; }) {
-  const [data, setData] = useState<DataRow[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [dates, setDates] = useState<string[]>([]);
+  const [groupedSeries, setGroupedSeries] = useState<Map<string, (number | null)[]> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchChartData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data, categories } = await fetchAndProcessData(config);
-      const parseDate = config.parseDateFn ?? ((d: unknown) => d as string);
-      const uniqueDates = [
-        ...new Set(data.map((d) => parseDate(d[config.dateKey])))
-      ];
-
-      setData(data);
+      const { categories, uniqueDates, groupedSeries } = await fetchAndProcessData(config);
       setCategories(categories);
       setDates(uniqueDates);
+      setGroupedSeries(groupedSeries);
     } catch (err) {
       console.error("Error loading chart data:", err);
     } finally {
@@ -69,38 +64,17 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
     fetchChartData();
   }, [fetchChartData]);
 
-  // show all categories, no filter
-  // const filteredData = data.filter((d) =>
-  //   selectedCategories.includes(d[config.categoryKey] as string)
-  // );
-  const filteredData = data;
+  const uniqueGroups = Array.from(new Set(chartConfigs.map((cfg) => cfg.group ?? cfg.id)));
+  const groupIndex = uniqueGroups.indexOf(config.group ?? config.id);
 
-  // Group-based color assignment
-  const uniqueGroups = Array.from(
-    new Set(chartConfigs.map((cfg) => cfg.group ?? cfg.id))
-  )
-  const groupIndex = uniqueGroups.indexOf(config.group ?? config.id)
-  
   const chartData = {
     labels: dates,
     datasets: categories.map((cat) => {
-      const catDataMap = new Map<string, number>()
-      filteredData
-        .filter((d) => d[config.categoryKey] === cat)
-        .forEach((d) =>
-          catDataMap.set(
-            (config.parseDateFn?.(d[config.dateKey]) ?? d[config.dateKey]) as string,
-            d[config.valueKey] as number
-          )
-        )
-
-      const dataPoints = dates.map((label) => catDataMap.get(label) ?? null)
-
-      const baseColorIndex = (groupIndex * 5) % pastelColors.length
-
+      const series = groupedSeries?.get(cat) ?? [];
+      const baseColorIndex = (groupIndex * 5) % pastelColors.length;
       return {
         label: cat,
-        data: dataPoints,
+        data: series,
         borderColor: pastelColors[baseColorIndex],
         backgroundColor: pastelColors[baseColorIndex] + "80",
         fill: true,
@@ -108,11 +82,10 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
         borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 0,
-      }
+      };
     }),
-  }
+  };
 
-  
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -120,7 +93,7 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
       legend: {
         position: "top" as const,
         labels: {
-          color: "white", // legend text color
+          color: "white",
         },
       },
       title: {
@@ -135,20 +108,20 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
       x: {
         display: true,
         ticks: {
-          color: "white", // x axis ticks color
+          color: "white",
         },
         grid: {
-          color: "rgba(255, 255, 255, 0.1)", // subtle white grid lines
+          color: "rgba(255, 255, 255, 0.1)",
         },
       },
       y: {
         display: true,
         beginAtZero: false,
         ticks: {
-          color: "white", // y axis ticks color
+          color: "white",
         },
         grid: {
-          color: "rgba(255, 255, 255, 0.1)", // subtle white grid lines
+          color: "rgba(255, 255, 255, 0.1)",
         },
       },
     },
@@ -168,12 +141,11 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
         <Image
           src="/watermark.png"
           alt="Watermark"
-          width={60} // Increased from 40 → 60 (50% more)
+          width={60}
           height={60}
           className="pointer-events-none absolute top-1/2 left-1/2 opacity-30 transform -translate-x-1/2 -translate-y-1/2"
         />
       </div>
-  
       <div className="text-sm text-gray-500 mt-2 text-center">
         Source:{" "}
         <a
@@ -187,7 +159,6 @@ function ChartBlock({ config }: { config: ChartConfig; }) {
       </div>
     </div>
   );
-  
 }
 
 export default function Home() {
@@ -201,10 +172,14 @@ export default function Home() {
       <main className="py-24 px-10 max-w-7xl mx-auto min-h-screen flex flex-col justify-center">
         <h1 className="text-3xl font-bold mb-8 text-center">Open Data Charts</h1>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6">
-          {chartConfigs.map((config) => (
+        {chartConfigs.map((config) =>
+          config.id === "population_pyramid" ? (
+            <PopulationPyramidChart key={config.id} config={config} />
+          ) : (
             <ChartBlock key={config.id} config={config} />
-          ))}
-          <TableauEmbed />
+          )
+        )}
+        <TableauEmbed />
         </div>
       </main>
     </>

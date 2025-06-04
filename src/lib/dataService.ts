@@ -15,24 +15,74 @@ export function parseYearMonth(dateStr: string): string {
   return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
 }
 
-export async function fetchAndProcessData<T extends DataRow>(config: ChartConfig<T>) {
-  const rawData = await fetchRawData<T>(config.tableName);
+// export async function fetchAndProcessData<T extends DataRow>(config: ChartConfig<T>) {
+//   const rawData = await fetchRawData<T>(config.tableName);
 
+//   const parseDate = config.parseDateFn ?? ((d: unknown) => String(d));
+
+//   const filteredData = config.filterFn ? rawData.filter(config.filterFn) : rawData;
+
+//   const categories = Array.from(
+//     new Set(filteredData.map((d) => String(d[config.categoryKey])))
+//   );
+
+//   const uniqueDates = Array.from(
+//     new Set(filteredData.map((d) => parseDate(d[config.dateKey])))
+//   ).sort();
+
+//   return {
+//     data: filteredData,
+//     categories,
+//     uniqueDates,
+//   };
+// }
+
+function groupDataByCategory<T extends DataRow>(
+  data: T[],
+  config: ChartConfig<T>,
+  dates: string[]
+) {
+  const categoryMap = new Map<string, (number | null)[]>();
   const parseDate = config.parseDateFn ?? ((d: unknown) => String(d));
 
+  const catSet = new Set(data.map((d) => String(d[config.categoryKey])));
+
+  for (const cat of catSet) {
+    const catDataMap = new Map<string, number>();
+
+    data
+      .filter((d) => String(d[config.categoryKey]) === cat)
+      .forEach((d) => {
+        const date = parseDate(d[config.dateKey]);
+        const value = Number(d[config.valueKey]);
+        catDataMap.set(date, value);
+      });
+
+    const series = dates.map((date) => catDataMap.get(date) ?? null);
+    categoryMap.set(cat, series);
+  }
+
+  return categoryMap;
+}
+
+export async function fetchAndProcessData<T extends DataRow>(
+  config: ChartConfig<T>
+) {
+  const rawData = await fetchRawData<T>(config.tableName);
+  const parseDate = config.parseDateFn ?? ((d: unknown) => String(d));
   const filteredData = config.filterFn ? rawData.filter(config.filterFn) : rawData;
 
-  const categories = Array.from(
-    new Set(filteredData.map((d) => String(d[config.categoryKey])))
-  );
-
+  const categories = Array.from(new Set(filteredData.map((d) => String(d[config.categoryKey]))));
   const uniqueDates = Array.from(
     new Set(filteredData.map((d) => parseDate(d[config.dateKey])))
   ).sort();
+
+  const grouped = groupDataByCategory(filteredData, config, uniqueDates);
 
   return {
     data: filteredData,
     categories,
     uniqueDates,
+    groupedSeries: grouped,
   };
 }

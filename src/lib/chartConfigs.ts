@@ -3,6 +3,73 @@ import { ChartConfig } from "./types"
 import { parseYearMonth } from "./dataService"
 
 export const chartConfigs: ChartConfig[] = [
+  // ───── Money Supply & Rates ─────
+  {
+    id: "m1_supply",
+    name: "M1 Money Supply",
+    tableName: "m1_supply", // M701111 → fetched CSV saved under this name
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M701111",
+    sourceLabel: "M1 Money Supply",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "money",
+    filterFn: (row) => String(row["Category"]) === "M1",
+  },
+  {
+    id: "m2_supply",
+    name: "M2 Money Supply",
+    tableName: "m2_supply", // M701111 → same table
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M701111",
+    sourceLabel: "M2 Money Supply",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "money",
+    filterFn: (row) => String(row["Category"]) === "M2",
+  },
+  {
+    id: "foreign_reserves",
+    name: "Total Official Foreign Reserves",
+    tableName: "foreign_reserves", // M700031
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M700031",
+    sourceLabel: "Total Official Foreign Reserves",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "money",
+    filterFn: (row) => String(row["Category"]) === "Total Official Foreign Reserves",
+  },
+  {
+    id: "bonds_5y",
+    name: "Government Securities – 5-Year Bond Yield",
+    tableName: "bonds_5y", // M700071
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M700071",
+    sourceLabel: "5-Year Bond Yield",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "money",
+    filterFn: (row) => String(row["Category"]) === "Government Securities - 5-Year Bond Yield",
+  },
+  {
+    id: "bonds_sora",
+    name: "Singapore Overnight Rate Average (SORA)",
+    tableName: "bonds_sora", // M700071
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M700071",
+    sourceLabel: "SORA",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "money",
+    filterFn: (row) => String(row["Category"]) === "Singapore Overnight Rate Average",
+  },
+
   {
     id: "total_population",
     name: "Total Population Over Time",
@@ -124,5 +191,120 @@ export const chartConfigs: ChartConfig[] = [
     group: "housing",
     filterFn: (row) => row["SeriesNo"] === "2", // ✅ Only include "Proportion Of Owner-Occupied Resident Households"
   },
+  // ───── Resident Dwellings ─────
+  {
+    id: "resident_dwellings_1rm",
+    name: "Resident Dwellings: HDB 1- & 2-Room Flats",
+    tableName: "resident_dwellings",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810351",
+    sourceLabel: "Department of Statistics Singapore - Resident Dwellings",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "housing_pop",
+    filterFn: (row) => String(row["Category"]) === "HDB 1- And 2-Room Flats",
+  },
+  {
+    id: "resident_dwellings_3rm",
+    name: "Resident Dwellings: HDB 3-Room Flats",
+    tableName: "resident_dwellings",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810351",
+    sourceLabel: "Department of Statistics Singapore - Resident Dwellings",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "housing_pop",
+    filterFn: (row) => String(row["Category"]) === "HDB 3-Room Flats",
+  },
+  {
+    id: "resident_dwellings_4rm",
+    name: "Resident Dwellings:HDB 4-Room Flats",
+    tableName: "resident_dwellings",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810351",
+    sourceLabel: "Department of Statistics Singapore - Resident Dwellings",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "housing_pop",
+    filterFn: (row) => String(row["Category"]) === "HDB 4-Room Flats",
+  },
+  {
+    id: "resident_dwellings_5rm",
+    name: "Resident Dwellings: HDB 5-Room And Executive Flats",
+    tableName: "resident_dwellings",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810351",
+    sourceLabel: "Department of Statistics Singapore - Resident Dwellings",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "housing_pop",
+    filterFn: (row) => String(row["Category"]) === "HDB 5-Room And Executive Flats",
+  },
+  {
+    id: "resident_dwellings_condo",
+    name: "Resident Dwellings: Condominiums And Other Apartments",
+    tableName: "resident_dwellings",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810351",
+    sourceLabel: "Department of Statistics Singapore - Resident Dwellings",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "housing_pop",
+    filterFn: (row) => String(row["Category"]) === "Condominiums And Other Apartments",
+  },
+  {
+    id: "resident_dwellings_landed",
+    name: "Resident Dwellings: Landed Properties",
+    tableName: "resident_dwellings",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810351",
+    sourceLabel: "Department of Statistics Singapore - Resident Dwellings",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "housing_pop",
+    filterFn: (row) => String(row["Category"]) === "Landed Properties",
+  },
+  {
+    id: "resident_dwellings_others",
+    name: "Resident Dwellings: Other Types Of Dwelling",
+    tableName: "resident_dwellings",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810351",
+    sourceLabel: "Department of Statistics Singapore - Resident Dwellings",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "housing_pop",
+    filterFn: (row) => String(row["Category"]) === "Other Types Of Dwelling",
+  },
+  // ─────────────── New Population Pyramid Config ───────────────
+  {
+    id: "population_pyramid",
+    name: "Population Pyramid (2024)",
+    tableName: "population_pyramid", // M810011
+    categoryKey: "Category",         // e.g. "0-4 Male", "0-4 Female", etc.
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810011",
+    sourceLabel: "Department of Statistics Singapore – Population Pyramid",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "demographic",
+    filterFn: (row) => {
+      const series = String(row["SeriesNo"]);
+      const date    = parseYearMonth(String(row["Date"]));
+      // include only 2.x (male) or 3.x (female) for year 2024
+      return (
+        (series.startsWith("2.") || series.startsWith("3.")) &&
+        date.startsWith("2024")
+      );
+    },
+  },
+
 
 ]
