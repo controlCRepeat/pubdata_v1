@@ -16,7 +16,7 @@ import {
   Legend,
 } from "chart.js";
 import Image from "next/image";
-
+import { pastelColors } from "../lib/colourScheme";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 interface PopulationPyramidChartProps {
@@ -92,12 +92,12 @@ export default function PopulationPyramidChart({ config }: PopulationPyramidChar
       {
         label: "Males",
         data: maleValues,
-        backgroundColor: "#89CFF0",
+        backgroundColor: pastelColors[0],
       },
       {
         label: "Females",
         data: femaleValues,
-        backgroundColor: "#FFB6C1",
+        backgroundColor: pastelColors[1],
       },
     ],
   };

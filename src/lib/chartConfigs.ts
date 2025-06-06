@@ -193,6 +193,25 @@ export const chartConfigs: ChartConfig[] = [
   },
   // ───── Resident Dwellings ─────
   {
+    id: "resident_dwellings",
+    name: "Resident Dwellings by Type",
+    tableName: "resident_dwellings",
+    categoryKey: "Category",
+    dateKey: "Date",
+    valueKey: "Value",
+    sourceUrl: "https://tablebuilder.singstat.gov.sg/table/TS/M810351",
+    sourceLabel: "Department of Statistics Singapore - Resident Dwellings",
+    parseDateFn: (d) => parseYearMonth(String(d)),
+    group: "housing_pop",
+    filterFn: (row) => {
+      const cat = String(row["Category"]);
+      return (
+        cat !== "Total HDB Dwellings" &&
+        cat !== "Resident Households"
+      );
+    },
+  },
+  {
     id: "resident_dwellings_1rm",
     name: "Resident Dwellings: HDB 1- & 2-Room Flats",
     tableName: "resident_dwellings",
