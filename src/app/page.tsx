@@ -9,7 +9,6 @@ import Head from "next/head";
 import Image from "next/image";
 import StackedBarChart from "../components/StackedBarChart";
 import PopulationPyramidChart from "../components/PopulationPyramid";
-import TableauEmbed from "../components/TableauEmbed";
 import { pastelColors } from "../lib/colourScheme";
 
 import {
